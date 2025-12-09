@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KINGPIN AUTOTRADES ROBOT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #121212 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* BMW Background with Smoke */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 0%, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.95) 100%),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230a0a0a"/><path d="M10 50 L90 50 M50 10 L50 90" stroke="%231a1a1a" stroke-width="0.5" opacity="0.2"/></svg>'),
+                linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.95)),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><filter id="f1" x="-50%" y="-50%" width="200%" height="200%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="10"/></filter><rect width="100" height="100" fill="%23000" filter="url(%23f1)"/></svg>');
+            background-size: cover;
+            z-index: -2;
+        }
+
+        .bmw-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M50 10 C30 10 10 30 10 50 C10 70 30 90 50 90 C70 90 90 70 90 50 C90 30 70 10 50 10 Z" fill="none" stroke="%231a1a1a" stroke-width="0.5"/></svg>'),
+                linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.95)),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="%230a0a0a" stroke-width="2"/></svg>');
+            background-size: cover;
+            z-index: -1;
+            opacity: 0.7;
+        }
+
+        .bmw-logo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12rem;
+            color: rgba(255, 255, 255, 0.05);
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        /* Matrix Rain Effect */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .matrix-column {
+            position: absolute;
+            top: -20px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #00e5ff;
+            text-shadow: 0 0 5px #00e5ff;
+            opacity: 0.8;
+            animation: rain linear infinite;
+        }
+
+        @keyframes rain {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(2px);
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-container {
+            text-align: center;
+            max-width: 800px;
+            padding: 30px;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 
+                0 0 30px rgba(0, 229, 255, 0.2),
+                inset 0 0 20px rgba(0, 0, 0, 0.7);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo {
+            font-size: 3.8rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #00e5ff, #ff1a1a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { text-shadow: 0 0 10px rgba(0, 229, 255, 0.7); }
+            50% { text-shadow: 0 0 20px rgba(0, 229, 255, 0.9), 0 0 30px rgba(255, 26, 26, 0.7); }
+            100% { text-shadow: 0 0 10px rgba(0, 229, 255, 0.7); }
+        }
+
+        .logo::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, #00e5ff, #ff1a1a);
+            border-radius: 2px;
+        }
+
+        .logo-subtitle {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+            margin-top: 5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .welcome-text {
+            font-size: 1.3rem;
+            margin: 15px 0;
+            color: #e0e0e0;
+            line-height: 1.6;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            animation: fadeIn 1.5s ease forwards 0.5s;
+        }
+
+        .status {
+            font-size: 1.1rem;
+            color: #a0a0a0;
+            margin: 20px 0;
+            opacity: 0;
+            animation: fadeIn 1.5s ease forwards 1.5s;
+        }
+
+        .loading-bar-container {
+            width: 90%;
+            max-width: 500px;
+            height: 18px;
+            background: rgba(30, 30, 30, 0.8);
+            border-radius: 10px;
+            margin: 25px auto;
+            overflow: hidden;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+        }
+
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #00e5ff, #00aaff);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-bar::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3), 
+                transparent 60%);
+            animation: shine 2s infinite;
+        }
+
+        .percentage {
+            font-size: 1.3rem;
+            color: #00e5ff;
+            font-weight: 700;
+            margin-top: 15px;
+            opacity: 0;
+            animation: fadeIn 1.5s ease forwards 2.5s;
+        }
+
+        .footer {
+            font-size: 0.85rem;
+            color: #606060;
+            margin-top: 20px;
+            opacity: 0;
+            animation: fadeIn 1.5s ease forwards 3.5s;
+        }
+
+        /* Authentication Screen */
+        .auth-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .auth-container {
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.2);
+            text-align: center;
+        }
+
+        .auth-title {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #00e5ff, #ff1a1a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .auth-subtitle {
+            color: #a0a0a0;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .pin-display {
+            width: 100%;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 10px;
+            margin: 20px 0;
+            padding: 0 25px;
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            letter-spacing: 5px;
+            color: #00e5ff;
+        }
+
+        .pin-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .pin-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: #e0e0e0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .pin-btn:hover {
+            background: rgba(0, 229, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .pin-btn:active {
+            transform: translateY(1px);
+        }
+
+        .pin-action {
+            grid-column: span 3;
+            background: linear-gradient(135deg, #00e5ff, #00aaff);
+            color: #000;
+            font-weight: 800;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+        }
+
+        .pin-delete {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #ff1a1a, #cc0000);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 26, 26, 0.4);
+        }
+
+        .fingerprint-btn {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(0, 80, 120, 0.3);
+            border: 1px solid rgba(0, 229, 255, 0.5);
+            border-radius: 12px;
+            color: #00e5ff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .fingerprint-btn:hover {
+            background: rgba(0, 229, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .fingerprint-btn i {
+            font-size: 1.5rem;
+        }
+
+        .setup-message {
+            margin-top: 20px;
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            min-height: 40px;
+        }
+
+        .error-message {
+            color: #ff1a1a;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            min-height: 20px;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) skewX(-15deg); }
+            100% { transform: translateX(200%) skewX(-15deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .loading-container {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 2.8rem;
+            }
+            
+            .auth-container {
+                padding: 30px 20px;
+            }
+            
+            .pin-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 2.2rem;
+            }
+            
+            .auth-container {
+                padding: 25px 15px;
+            }
+            
+            .pin-btn {
+                width: 55px;
+                height: 55px;
+                font-size: 1.2rem;
+            }
+            
+            .pin-display {
+                font-size: 2rem;
+                height: 50px;
+            }
+            
+            .auth-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Elements -->
+    <div class="background"></div>
+    <div class="bmw-overlay"></div>
+    <div class="bmw-logo">BMW</div>
+    
+    <!-- Matrix Rain Effect -->
+    <div class="matrix-rain" id="matrix-rain"></div>
+    
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-container">
+            <div class="logo">KINGPIN</div>
+            <div class="logo-subtitle">AUTOTRADES ROBOT</div>
+            <div class="welcome-text">heyyy... System Initializing</div>
+            <div class="status">Connecting to trading server...</div>
+            
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loading-bar"></div>
+            </div>
+            
+            <div class="percentage" id="percentage">0%</div>
+            <div class="footer">© 2023 KINGPIN AUTOTRADES ROBOT. All rights reserved.</div>
+        </div>
+    </div>
+
+    <!-- Authentication Screen -->
+    <div class="auth-screen" id="auth-screen">
+        <div class="auth-container">
+            <div class="auth-title">SECURE ACCESS</div>
+            <div class="auth-subtitle">Enter your 6-digit passcode to continue</div>
+            
+            <div class="pin-display" id="pin-display">------</div>
+            
+            <div class="pin-container">
+                <button class="pin-btn" data-value="1">1</button>
+                <button class="pin-btn" data-value="2">2</button>
+                <button class="pin-btn" data-value="3">3</button>
+                <button class="pin-btn" data-value="4">4</button>
+                <button class="pin-btn" data-value="5">5</button>
+                <button class="pin-btn" data-value="6">6</button>
+                <button class="pin-btn" data-value="7">7</button>
+                <button class="pin-btn" data-value="8">8</button>
+                <button class="pin-btn" data-value="9">9</button>
+                <button class="pin-btn pin-action" id="setup-btn">SETUP</button>
+                <button class="pin-btn" data-value="0">0</button>
+                <button class="pin-btn pin-delete" id="delete-btn">
+                    <i class="fas fa-backspace"></i>
+                </button>
+            </div>
+            
+            <button class="fingerprint-btn" id="fingerprint-btn">
+                <i class="fas fa-fingerprint"></i> Use Fingerprint
+            </button>
+            
+            <div class="setup-message" id="setup-message">
+                First time user? Press SETUP to create your passcode
+            </div>
+            
+            <div class="error-message" id="error-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // Constants for security
+        const AUTH_KEY = 'kingpin_auth_v1';
+        const SESSION_KEY = 'kingpin_session_v1';
+        const PIN_LENGTH = 6;
+        const MAX_ATTEMPTS = 5;
+        
+        // Security state
+        let currentPin = '';
+        let isSettingUp = false;
+        let setupStep = 0;
+        let attempts = 0;
+        let lockoutTime = 0;
+        let hasHardwareSupport = false;
+        
+        // Matrix Rain Effect
+        function createMatrixRain() {
+            const container = document.getElementById('matrix-rain');
+            const screenWidth = window.innerWidth;
+            const columns = Math.floor(screenWidth / 20);
+            const chars = '0123456789ABCDEF';
+            
+            container.innerHTML = '';
+            
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = `${(i / columns) * 100}%`;
+                column.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                
+                // Generate random characters
+                const length = Math.floor(Math.random() * 30) + 10;
+                for (let j = 0; j < length; j++) {
+                    const char = document.createElement('span');
+                    char.textContent = chars.charAt(Math.floor(Math.random() * chars.length));
+                    char.style.top = `${j * 20}px`;
+                    char.style.opacity = Math.random() * 0.7 + 0.3;
+                    char.style.fontSize = `${Math.random() * 10 + 10}px`;
+                    column.appendChild(char);
+                }
+                
+                container.appendChild(column);
+            }
+        }
+        
+        // Loading Animation
+        function animateLoading() {
+            const loadingBar = document.getElementById('loading-bar');
+            const percentage = document.getElementById('percentage');
+            let width = 0;
+            const duration = 8000; // 8 seconds
+            const interval = 20;
+            const increment = 100 / (duration / interval);
+            
+            const animation = setInterval(() => {
+                width += increment;
+                if (width >= 100) {
+                    width = 100;
+                    clearInterval(animation);
+                    
+                    // Hide loading screen and show auth
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('loading-screen').style.display = 'none';
+                            showAuthScreen();
+                        }, 500);
+                    }, 300);
+                }
+                
+                loadingBar.style.width = `${width}%`;
+                percentage.textContent = `${Math.round(width)}%`;
+            }, interval);
+        }
+        
+        // Authentication Functions
+        function showAuthScreen() {
+            const authScreen = document.getElementById('auth-screen');
+            authScreen.style.opacity = '1';
+            authScreen.style.pointerEvents = 'all';
+            
+            // Check if user is already authenticated
+            const session = getStoredSession();
+            if (session && !isLockedOut()) {
+                setTimeout(() => {
+                    redirectToApp();
+                }, 1000);
+                return;
+            }
+            
+            // Check for hardware support
+            checkHardwareSupport();
+            
+            // Setup event listeners
+            setupPinButtons();
+        }
+        
+        function setupPinButtons() {
+            // Number buttons
+            document.querySelectorAll('.pin-btn[data-value]').forEach(button => {
+                button.addEventListener('click', () => {
+                    if (isLockedOut()) return;
+                    
+                    const value = button.getAttribute('data-value');
+                    addDigit(value);
+                });
+            });
+            
+            // Delete button
+            document.getElementById('delete-btn').addEventListener('click', () => {
+                if (isLockedOut()) return;
+                deleteDigit();
+            });
+            
+            // Setup button
+            document.getElementById('setup-btn').addEventListener('click', () => {
+                if (isLockedOut()) return;
+                toggleSetupMode();
+            });
+            
+            // Fingerprint button
+            document.getElementById('fingerprint-btn').addEventListener('click', () => {
+                if (isLockedOut()) return;
+                useFingerprint();
+            });
+        }
+        
+        function addDigit(digit) {
+            if (currentPin.length >= PIN_LENGTH && !isSettingUp) return;
+            
+            currentPin += digit;
+            updatePinDisplay();
+            
+            if (currentPin.length === PIN_LENGTH) {
+                if (isSettingUp) {
+                    handleSetupPin();
+                } else {
+                    verifyPin();
+                }
+            }
+        }
+        
+        function deleteDigit() {
+            currentPin = currentPin.slice(0, -1);
+            updatePinDisplay();
+        }
+        
+        function updatePinDisplay() {
+            const display = document.getElementById('pin-display');
+            if (isSettingUp && setupStep === 1) {
+                display.textContent = currentPin.padEnd(PIN_LENGTH, '-');
+            } else {
+                display.textContent = '*'.repeat(currentPin.length).padEnd(PIN_LENGTH, '-');
+            }
+        }
+        
+        function toggleSetupMode() {
+            const setupBtn = document.getElementById('setup-btn');
+            const setupMessage = document.getElementById('setup-message');
+            const fingerprintBtn = document.getElementById('fingerprint-btn');
+            
+            if (!isSettingUp) {
+                // Enter setup mode
+                isSettingUp = true;
+                setupStep = 0;
+                currentPin = '';
+                setupBtn.textContent = 'CANCEL';
+                setupBtn.style.background = 'linear-gradient(135deg, #ff1a1a, #cc0000)';
+                setupMessage.textContent = 'Enter your first 6-digit passcode';
+                fingerprintBtn.style.display = 'none';
+            } else {
+                // Cancel setup
+                isSettingUp = false;
+                setupStep = 0;
+                currentPin = '';
+                setupBtn.textContent = 'SETUP';
+                setupBtn.style.background = 'linear-gradient(135deg, #00e5ff, #00aaff)';
+                setupMessage.textContent = 'First time user? Press SETUP to create your passcode';
+                fingerprintBtn.style.display = hasHardwareSupport ? 'flex' : 'none';
+                updatePinDisplay();
+            }
+        }
+        
+        function handleSetupPin() {
+            const setupMessage = document.getElementById('setup-message');
+            
+            if (setupStep === 0) {
+                // First PIN entry
+                setupStep = 1;
+                setupMessage.textContent = 'Confirm your 6-digit passcode';
+                currentPin = '';
+                updatePinDisplay();
+            } else if (setupStep === 1) {
+                // Confirmation
+                const firstPin = document.getElementById('pin-display').textContent;
+                const storedPin = getStoredPin();
+                
+                if (storedPin) {
+                    showError('Passcode already exists. Please login instead.');
+                    cancelSetup();
+                    return;
+                }
+                
+                if (currentPin.length !== PIN_LENGTH) {
+                    showError('Please enter a 6-digit passcode');
+                    currentPin = '';
+                    updatePinDisplay();
+                    return;
+                }
+                
+                // Save the PIN securely
+                savePin(currentPin);
+                
+                // Create session
+                createSession();
+                
+                setupMessage.textContent = '✓ Passcode created successfully!';
+                setTimeout(() => {
+                    redirectToApp();
+                }, 1500);
+            }
+        }
+        
+        function verifyPin() {
+            const storedPin = getStoredPin();
+            const errorMessage = document.getElementById('error-message');
+            
+            if (!storedPin) {
+                showError('No passcode found. Please setup your passcode first.');
+                currentPin = '';
+                updatePinDisplay();
+                return;
+            }
+            
+            if (currentPin === storedPin) {
+                // Successful login
+                attempts = 0;
+                saveAttempts(attempts);
+                createSession();
+                document.getElementById('setup-message').textContent = '✓ Authentication successful!';
+                setTimeout(() => {
+                    redirectToApp();
+                }, 1000);
+            } else {
+                // Failed login
+                attempts++;
+                saveAttempts(attempts);
+                
+                if (attempts >= MAX_ATTEMPTS) {
+                    lockoutUser();
+                    showError(`Maximum attempts reached. Try again in 5 minutes.`);
+                } else {
+                    showError(`Invalid passcode. ${MAX_ATTEMPTS - attempts} attempts remaining.`);
+                }
+                
+                currentPin = '';
+                updatePinDisplay();
+            }
+        }
+        
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.style.opacity = '1';
+            
+            // Clear error after 3 seconds
+            setTimeout(() => {
+                errorMessage.style.opacity = '0';
+            }, 3000);
+        }
+        
+        // Security Storage Functions
+        function savePin(pin) {
+            try {
+                // Simple encryption for demonstration (in production, use proper encryption)
+                const encrypted = btoa(encodeURIComponent(pin));
+                localStorage.setItem(AUTH_KEY, encrypted);
+                
+                // Also save setup time for security
+                localStorage.setItem('kingpin_setup_time', new Date().toISOString());
+            } catch (e) {
+                console.error('Failed to save PIN:', e);
+                showError('Failed to save passcode. Please try again.');
+            }
+        }
+        
+        function getStoredPin() {
+            try {
+                const encrypted = localStorage.getItem(AUTH_KEY);
+                if (!encrypted) return null;
+                return decodeURIComponent(atob(encrypted));
+            } catch (e) {
+                console.error('Failed to get PIN:', e);
+                return null;
+            }
+        }
+        
+        function saveAttempts(count) {
+            localStorage.setItem('kingpin_attempts', count.toString());
+            localStorage.setItem('kingpin_last_attempt', new Date().toISOString());
+        }
+        
+        function getStoredSession() {
+            try {
+                const session = localStorage.getItem(SESSION_KEY);
+                if (!session) return null;
+                
+                const parsed = JSON.parse(session);
+                const now = new Date();
+                const sessionTime = new Date(parsed.timestamp);
+                
+                // Session expires after 24 hours
+                const expiryTime = new Date(sessionTime.getTime() + 24 * 60 * 60 * 1000);
+                
+                return now < expiryTime ? parsed : null;
+            } catch (e) {
+                return null;
+            }
+        }
+        
+        function createSession() {
+            const session = {
+                authenticated: true,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent
+            };
+            
+            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        }
+        
+        function isLockedOut() {
+            if (lockoutTime > Date.now()) {
+                const remaining = Math.ceil((lockoutTime - Date.now()) / 60000);
+                showError(`Account locked. Try again in ${remaining} minute(s).`);
+                return true;
+            }
+            return false;
+        }
+        
+        function lockoutUser() {
+            lockoutTime = Date.now() + (5 * 60 * 1000); // 5 minutes lockout
+            saveAttempts(MAX_ATTEMPTS);
+            
+            // Clear any existing session
+            localStorage.removeItem(SESSION_KEY);
+        }
+        
+        function cancelSetup() {
+            isSettingUp = false;
+            setupStep = 0;
+            currentPin = '';
+            document.getElementById('setup-btn').textContent = 'SETUP';
+            document.getElementById('setup-btn').style.background = 'linear-gradient(135deg, #00e5ff, #00aaff)';
+            document.getElementById('setup-message').textContent = 'First time user? Press SETUP to create your passcode';
+            document.getElementById('pin-display').textContent = '------';
+        }
+        
+        // Hardware Support (Fingerprint)
+        function checkHardwareSupport() {
+            const fingerprintBtn = document.getElementById('fingerprint-btn');
+            
+            if (window.PublicKeyCredential) {
+                hasHardwareSupport = true;
+                fingerprintBtn.style.display = 'flex';
+                
+                // Check if user has set up biometrics
+                navigator.credentials.create({
+                    publicKey: {
+                        challenge: new Uint8Array(32),
+                        rp: { name: "KINGPIN AUTOTRADES ROBOT" },
+                        user: {
+                            id: new Uint8Array(16),
+                            name: "user",
+                            displayName: "User"
+                        },
+                        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                        timeout: 60000
+                    }
+                }).then(() => {
+                    // Hardware available but we can't actually use it without proper setup
+                    // This just confirms hardware exists
+                }).catch(e => {
+                    hasHardwareSupport = false;
+                    fingerprintBtn.style.display = 'none';
+                });
+            } else {
+                hasHardwareSupport = false;
+                fingerprintBtn.style.display = 'none';
+            }
+        }
+        
+        function useFingerprint() {
+            if (!hasHardwareSupport) {
+                showError('Fingerprint authentication not supported on this device.');
+                return;
+            }
+            
+            if (isLockedOut()) return;
+            
+            const storedPin = getStoredPin();
+            if (!storedPin) {
+                showError('Please setup your passcode first before using fingerprint.');
+                return;
+            }
+            
+            // In a real implementation, this would use WebAuthn
+            // For demo purposes, we'll simulate a fingerprint scan
+            document.getElementById('pin-display').textContent = 'SCAN...';
+            
+            // Simulate fingerprint verification
+            setTimeout(() => {
+                const success = Math.random() > 0.2; // 80% success rate for demo
+                
+                if (success) {
+                    createSession();
+                    document.getElementById('setup-message').textContent = '✓ Fingerprint authenticated!';
+                    setTimeout(() => {
+                        redirectToApp();
+                    }, 1000);
+                } else {
+                    attempts++;
+                    saveAttempts(attempts);
+                    
+                    if (attempts >= MAX_ATTEMPTS) {
+                        lockoutUser();
+                        showError('Maximum attempts reached. Try again in 5 minutes.');
+                    } else {
+                        showError(`Fingerprint not recognized. Try passcode instead.`);
+                    }
+                    
+                    document.getElementById('pin-display').textContent = '------';
+                }
+            }, 1500);
+        }
+        
+        function redirectToApp() {
+            // Clear the pin display for security
+            currentPin = '';
+            document.getElementById('pin-display').textContent = '------';
+            
+            // Redirect to the actual app
+            window.location.href = 'https://app.binarytool.site/';
+        }
+        
+        // Security hardening
+        function preventBypass() {
+            // Prevent console tampering
+            if (typeof window.console !== 'undefined') {
+                const originalConsole = { ...window.console };
+                window.console = {
+                    log: function() {},
+                    warn: function() {},
+                    error: function() {},
+                    info: function() {},
+                    debug: function() {},
+                    table: function() {},
+                    assert: function() {},
+                    clear: function() {},
+                    count: function() {},
+                    countReset: function() {},
+                    group: function() {},
+                    groupEnd: function() {},
+                    groupCollapsed: function() {},
+                    trace: function() {},
+                    dir: function() {},
+                    dirxml: function() {},
+                    time: function() {},
+                    timeLog: function() {},
+                    timeEnd: function() {}
+                };
+            }
+            
+            // Prevent URL tampering
+            const originalPushState = history.pushState;
+            history.pushState = function(state) {
+                if (window.location.pathname !== '/') {
+                    return;
+                }
+                return originalPushState.apply(history, arguments);
+            };
+            
+            // Prevent developer tools
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.shiftKey && e.key === 'J') || (e.ctrlKey && e.key === 'U')) {
+                    e.preventDefault();
+                    showError('Developer tools are disabled for security.');
+                }
+            });
+            
+            // Prevent context menu
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showError('Right-click is disabled for security.');
+            });
+        }
+        
+        // Initialize the application
+        window.addEventListener('DOMContentLoaded', () => {
+            createMatrixRain();
+            animateLoading();
+            preventBypass();
+            
+            // Handle window resize for matrix rain
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    createMatrixRain();
+                }, 250);
+            });
+        });
+        
+        // Periodically check authentication state
+        setInterval(() => {
+            const session = getStoredSession();
+            const authScreen = document.getElementById('auth-screen');
+            
+            if (!session && authScreen.style.opacity === '0') {
+                // Session expired, show auth screen
+                authScreen.style.opacity = '1';
+                authScreen.style.pointerEvents = 'all';
+            }
+        }, 60000); // Check every minute
+    </script>
+</body>
+</html>
